@@ -1,46 +1,35 @@
 import streamlit as st
-import pandas as pd
-import numpy as np  
+from databricks import sql
+from databricks.sdk.core import Config
+from dotenv import load_dotenv
+load_dotenv()  # 自动读取项目根目录的 .env 文件
 
-st.title("Uber Pickups in NYC")
+cfg = Config()  # Set the DATABRICKS_HOST environment variable when running locally
+DATABRICKS_PATH = 'sql/protocolv1/o/3117460798135006/1210-042457-47i4jn6a'
 
-DATE_COLUMN = 'date/time'
-DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
-         'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
+@st.cache_resource  # connection is cached
+def get_connection(http_path):
+    return sql.connect(
+        server_hostname=cfg.host,
+        http_path=http_path,
+        credentials_provider=lambda: cfg.authenticate,
+    )
 
-# 装饰器，来缓存数据加载结果
-@st.cache_data
-def load_data(nrows):
-    data = pd.read_csv(DATA_URL, nrows=nrows)
-    lowercase = lambda x: str(x).lower()
-    data.rename(lowercase, axis='columns', inplace=True)
-    data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
-    return data
+def read_table(table_name, conn):
+    with conn.cursor() as cursor:
+        query = f"SELECT * FROM {table_name}"
+        cursor.execute(query)
+        return cursor.fetchall_arrow().to_pandas()
 
-# Create a text element and let the reader know the data is loading.
-data_load_state = st.text('Loading data...')
-# Load 10,000 rows of data into the dataframe.
-data = load_data(10000)
-# Notify the reader that the data was successfully loaded.
-data_load_state.text('Done! (using st.cache_data)')
+http_path_input = st.text_input(
+    "Enter your Databricks HTTP Path:", placeholder=DATABRICKS_PATH
+)
 
-if st.checkbox('Show raw data'):
-    st.subheader('Raw data')
-    st.write(data)
+table_name = st.text_input(
+    "Specify a :re[UC] table name:", placeholder="catalog.schema.table"
+)
 
-st.subheader('Number of pickups by hour')
-
-hist_values = np.histogram(
-    data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
-st.bar_chart(hist_values)
-
-st.subheader('Map of all pickups')
-
-st.map(data)
-
-# hour_to_filter = 17
-# filtered_data = data[data[DATE_COLUMN].dt.hour == hour_to_filter]
-# st.subheader(f'Map of all pickups at {hour_to_filter}:00')
-# st.map(filtered_data)
-
-hour_to_filter = st.slider('hour', 0, 23, 17)  # min: 0h, max: 23h, default: 17h
+if http_path_input and table_name:
+    conn = get_connection(http_path_input)
+    df = read_table(table_name, conn)
+    st.dataframe(df)
