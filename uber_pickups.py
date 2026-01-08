@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()  # 自动读取项目根目录的 .env 文件
 
 cfg = Config()  # Set the DATABRICKS_HOST environment variable when running locally
-DATABRICKS_PATH = 'sql/protocolv1/o/3117460798135006/1210-042457-47i4jn6a'
+# DATABRICKS_PATH = 'sql/protocolv1/o/3117460798135006/1210-042457-47i4jn6a'
+DATABRICKS_PATH = 'sql/protocolv1/o/3292840790767374/1014-081556-mahjj0tn'
 
 @st.cache_resource  # connection is cached
 def get_connection(http_path):

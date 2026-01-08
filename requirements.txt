@@ -1,0 +1,6 @@
+databricks-sdk==0.74.0
+databricks-sql-connector==4.2.2
+dotenv==0.9.9
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
+streamlit==1.52.1

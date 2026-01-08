@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+.git/
+.gitignore
+*.egg-info
+build/
+dist/
+*.md
+.ipynb_checkpoints/
